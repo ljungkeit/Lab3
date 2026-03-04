@@ -15,4 +15,14 @@ class Game{
         self.category = category
         self.available = available
     }
+    func getName() -> String{
+        return self.name;
+    }
+    func getAvailable() -> Bool{
+        return self.available;
+    }
+    func getCategory() -> String{
+        return self.category;
+    }
+    
 }
