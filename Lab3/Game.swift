@@ -5,24 +5,11 @@
 //  Created by Luca Thomas Jungkeit on 3/4/26.
 //
 
-class Game{
-    var name: String;
-    var available: Bool;
+import Foundation // allows us to use UUID to create custom auto generated ID's for each game
+
+struct Game: Identifiable {
+    var id: UUID = UUID()
+    var name: String
+    var available: Bool = true
     var category: String;
-    
-    init (name: String, available: Bool , category: String){
-        self.name = name
-        self.category = category
-        self.available = available
-    }
-    func getName() -> String{
-        return self.name;
-    }
-    func getAvailable() -> Bool{
-        return self.available;
-    }
-    func getCategory() -> String{
-        return self.category;
-    }
-    
 }
