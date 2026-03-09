@@ -21,4 +21,5 @@ struct Game: Identifiable {
     var name: String
     var available: Bool = true
     var category: GameCategory;
+    var numberOfPlayers: String
 }

@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var newGameCategory: GameCategory = .action
     @State private var searchText = ""
     @State private var selectedCategoryFilter: GameCategory? = nil
+    @State private var newGamePlayers: String = ""
     // filters games based on search text
     var filteredGames: [Game] {
         var results = gameHub.games
@@ -19,6 +20,38 @@ struct ContentView: View {
             results = results.filter { game in game.name.localizedCaseInsensitiveContains(searchText) }
         }
         return results
+    }
+    
+    struct GameRowView: View {
+        let game: Game
+        @Binding var gameHub: GameHub
+        
+        var body: some View {
+            HStack(spacing: 50) {
+                VStack(alignment: .leading) {
+                    Text(game.name)
+                        .font(.headline)
+                        .padding(5)
+                    Text(game.category.rawValue)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(5)
+                    Text(game.numberOfPlayers + " players")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(5)
+                }
+                Text(game.available ? "Available" : "Borrowed")
+                    .foregroundColor(game.available ? .green : .red)
+                Button(game.available ? "Borrow" : "Return") {
+                    if game.available {
+                        gameHub.borrowGame(game: game)
+                    } else {
+                        gameHub.returnGame(game: game)
+                    }
+                }
+            }
+        }
     }
 
     var body: some View {
@@ -36,35 +69,16 @@ struct ContentView: View {
                             Text(category.rawValue)
                                 .tag(GameCategory?.some(category))
                         }
-                        
                     }
                     .pickerStyle(.menu)
+                    .padding(5)
                     Spacer()
                 }
                 .padding(.horizontal)
             }
             List {
                 ForEach(filteredGames) { game in
-                    HStack (spacing: 50) {
-                        VStack(alignment: .leading) {
-                            Text(game.name)
-                                .font(.headline)
-                                .padding(5)
-                            Text(game.category.rawValue)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .padding(5)
-                        }
-                            Text(game.available ? "Available" : "Borrowed")
-                            .foregroundColor(game.available ? Color.green : Color.red)
-                            Button(game.available ? "Borrow" : "Return") {
-                                if game.available {
-                                    gameHub.borrowGame(game: game)
-                                } else {
-                                    gameHub.returnGame(game: game)
-                                }
-                        }
-                    }
+                    GameRowView(game: game, gameHub: $gameHub)
                 }
             }
             .searchable(text: $searchText, prompt: "Search games")
@@ -98,20 +112,25 @@ struct ContentView: View {
                                         Image(systemName: "circle")
                                             .foregroundColor(.gray)
                                     }
-                                    
                                 }
                             }
                         }
                     }
                     Section {
-                        
+                        HStack {
+                            TextField("Number of Players", text: $newGamePlayers)
+                        }
+                    }
+                    Section {
                         HStack {
                             Button("Cancel") {
                                 showingAddGame = false
+                                newGamePlayers = ""
+                                newGameName = ""
                             }
                             .padding(5)
                             Button("Add") {
-                                gameHub.games.append(Game(name: newGameName, category: newGameCategory))
+                                gameHub.games.append(Game(name: newGameName, category: newGameCategory, numberOfPlayers: newGamePlayers))
                                 newGameName = ""
                                 newGameCategory = .action
                                 showingAddGame = false
