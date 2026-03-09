@@ -4,20 +4,45 @@ struct ContentView: View {
     @State private var gameHub = GameHub()
     @State private var showingAddGame = false
     @State private var newGameName = ""
-    @State private var newGameCategory = ""
+    @State private var newGameCategory: GameCategory = .action
     @State private var searchText = ""
-
+    @State private var selectedCategoryFilter: GameCategory? = nil
     // filters games based on search text
     var filteredGames: [Game] {
-        if searchText.isEmpty {
-            return gameHub.games
-        } else {
-            return gameHub.games.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        var results = gameHub.games
+        
+        if let selectedCategory = selectedCategoryFilter {
+            results = results.filter { game in game.category == selectedCategory }
         }
+        
+        if !searchText.isEmpty {
+            results = results.filter { game in game.name.localizedCaseInsensitiveContains(searchText) }
+        }
+        return results
     }
 
     var body: some View {
         NavigationStack {
+            VStack{
+                HStack{
+                    Text("Filter by:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Picker("Category", selection: $selectedCategoryFilter) {
+                        Text("All Categories")
+                            .tag(GameCategory?.none)
+                        
+                        ForEach(GameCategory.allCases) { category in
+                            Text(category.rawValue)
+                                .tag(GameCategory?.some(category))
+                        }
+                        
+                    }
+                    .pickerStyle(.menu)
+                    Spacer()
+                }
+                .padding(.horizontal)
+            }
             List {
                 ForEach(filteredGames) { game in
                     HStack (spacing: 50) {
@@ -25,17 +50,16 @@ struct ContentView: View {
                             Text(game.name)
                                 .font(.headline)
                                 .padding(5)
-                            Text(game.category)
+                            Text(game.category.rawValue)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(5)
                         }
                             Text(game.available ? "Available" : "Borrowed")
-                            .foregroundColor(Color.green)
+                            .foregroundColor(game.available ? Color.green : Color.red)
                             Button(game.available ? "Borrow" : "Return") {
                                 if game.available {
                                     gameHub.borrowGame(game: game)
-                                    Text("Borrowed")
                                 } else {
                                     gameHub.returnGame(game: game)
                                 }
@@ -52,22 +76,49 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingAddGame) {
                 Form {
-                    TextField("Game Name", text: $newGameName)
-                        .padding(10)
-                    TextField("Category", text: $newGameCategory)
-                    HStack {
-                        Button("Cancel") {
-                            showingAddGame = false
+                    Section("Game Info") {
+                        TextField("Game Name", text: $newGameName)
+                            .padding(10)
+                    }
+                    
+                    Section("Select Category") {
+                        ForEach(GameCategory.allCases) {category in
+                            Button {
+                                newGameCategory = category
+                            } label :{
+                                HStack {
+                                    Text(category.rawValue)
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                    if newGameCategory == category {
+                                        Image(systemName : "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                        
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.gray)
+                                    }
+                                    
+                                }
+                            }
                         }
-                        .padding(5)
-                        Button("Add") {
-                            gameHub.games.append(Game(name: newGameName, category: newGameCategory))
-                            newGameName = ""
-                            newGameCategory = ""
-                            showingAddGame = false
+                    }
+                    Section {
+                        
+                        HStack {
+                            Button("Cancel") {
+                                showingAddGame = false
+                            }
+                            .padding(5)
+                            Button("Add") {
+                                gameHub.games.append(Game(name: newGameName, category: newGameCategory))
+                                newGameName = ""
+                                newGameCategory = .action
+                                showingAddGame = false
+                            }
+                            .disabled(newGameName.isEmpty)
+                            .padding(5)
                         }
-                        .disabled(newGameName.isEmpty || newGameCategory.isEmpty)
-                        .padding(5)
                     }
                 }
             }
